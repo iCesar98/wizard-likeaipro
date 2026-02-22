@@ -1,10 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Like AI PRO Wizard</title>
+  <title>Wizard Like AI PRO</title>
 </head>
-<body style="background:#0f172a; color:white; font-family:Arial; text-align:center; padding:50px;">
-  <h1>🚀 Wizard Like AI PRO funcionando</h1>
-  <p>Servidor activo correctamente.</p>
+<body>
+
+  <h1>Crear tu Bot</h1>
+
+  <input id="email" placeholder="Tu email" /><br><br>
+  <input id="business" placeholder="Nombre del negocio" /><br><br>
+  <input id="type" placeholder="Tipo de negocio" /><br><br>
+  <input id="whatsapp" placeholder="WhatsApp" /><br><br>
+  <input id="objective" placeholder="Objetivo del bot" /><br><br>
+  <input id="tone" placeholder="Tono del bot" /><br><br>
+
+  <button onclick="submitBot()">Crear Bot</button>
+
+  <script>
+    async function submitBot() {
+      const email = document.getElementById("email").value;
+      const business = document.getElementById("business").value;
+      const type = document.getElementById("type").value;
+      const whatsapp = document.getElementById("whatsapp").value;
+      const objective = document.getElementById("objective").value;
+      const tone = document.getElementById("tone").value;
+
+      const response = await fetch("/create-bot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          user_email: email,
+          business_name: business,
+          business_type: type,
+          whatsapp_number: whatsapp,
+          bot_objective: objective,
+          tone: tone
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Bot creado correctamente 🚀");
+      } else {
+        alert("Error creando bot ❌");
+        console.log(data.error);
+      }
+    }
+  </script>
+
 </body>
 </html>
