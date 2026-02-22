@@ -41,8 +41,7 @@
     <div id="demo-bar" class="demo-counter bg-indigo-600 h-full w-full"></div>
   </div>
 
-  <div id="chat" class="flex-1 p-6 overflow-y-auto space-y-4 bg-gray-50 flex flex-col">
-    </div>
+  <div id="chat" class="flex-1 p-6 overflow-y-auto space-y-4 bg-gray-50 flex flex-col"></div>
 
   <div id="typing" class="hidden px-6 py-2 text-xs text-gray-500 italic flex items-center gap-2">
     <span class="relative flex h-2 w-2">
@@ -86,7 +85,7 @@
 <script>
 let sessionId = crypto.randomUUID();
 let demoMode = false;
-let maxMessages = 10;
+let maxMessages = 6; // Límite sincronizado con el servidor
 
 const chat = document.getElementById("chat");
 const typing = document.getElementById("typing");
@@ -97,19 +96,21 @@ const statusText = document.getElementById("status-text");
 
 function addMessage(role, text) {
   const isBot = role === "bot";
+  const isSystem = role === "system";
   
-  // LIMPIEZA DE TEXTO:
-  // 1. Quitamos los asteriscos de negrita (**)
-  // 2. Quitamos espacios en blanco al inicio y final (.trim())
+  // Limpieza de asteriscos y espacios extra
   let cleanText = text.replace(/\*\*/g, '').trim();
 
   const div = document.createElement("div");
-  div.className = `flex ${isBot ? "" : "justify-end"} animate-fade-in my-2`; // Añadido 'my-2' para separación vertical
+  div.className = `flex ${isBot || isSystem ? "" : "justify-end"} animate-fade-in my-2`;
   
-  // Ajustado el CSS para que el texto se alinee perfectamente
+  let bgColor = isBot ? "bg-white border-gray-200 text-gray-800 shadow-sm" : "bg-black text-white shadow-md";
+  if (isSystem) bgColor = "bg-blue-100 border-blue-200 text-blue-800 font-semibold italic text-center w-full max-w-none rounded-lg";
+
   div.innerHTML = `
-    <div class="${isBot ? "bg-white border border-gray-200 text-gray-800" : "bg-black text-white"} px-5 py-3 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm break-words">
-      ${cleanText.replace(/\n/g, '<br>')} </div>
+    <div class="${bgColor} px-5 py-3 rounded-2xl ${isSystem ? '' : 'max-w-[85%]'} text-sm leading-relaxed break-words">
+      ${cleanText.replace(/\n/g, '<br>')}
+    </div>
   `;
   
   chat.appendChild(div);
@@ -140,28 +141,29 @@ async function sendMessage() {
       addMessage("bot", data.reply);
     }
 
-    // TRANSICIÓN MEJORADA
+    // Transición explícita al modo demo
     if (data.ready_for_demo && !demoMode) {
       demoMode = true;
       setTimeout(() => {
-        addMessage("bot", "🚀 **SISTEMA:** La demo se ha activado. Ahora estás interactuando con tu nuevo asistente personalizado.");
+        addMessage("system", "⚙️ AVISO DE SISTEMA: La configuración ha finalizado. A partir de este momento estás hablando con tu DEMO en vivo.");
         
-        // Actualizamos UI
         demoProgress.classList.remove("hidden");
-        badgeMode.innerText = "Fase 2: Demo en Vivo";
+        badgeMode.innerText = "FASE 2: DEMO EN VIVO";
         badgeMode.classList.replace("bg-gray-800", "bg-green-600");
-        statusText.innerText = "Probando tu asistente...";
+        statusText.innerText = "Probando tu asistente personalizado...";
         
         if (data.extracted_data?.platform) {
           document.getElementById("target-platform").innerText = data.extracted_data.platform;
         }
-      }, 1000); // Esperamos un segundo para que el usuario lea el resumen
+      }, 800);
     }
 
+    // Control de la barra de progreso en demo
     if (demoMode && data.messagesLeft !== undefined) {
       const percentage = (data.messagesLeft / maxMessages) * 100;
       demoBar.style.width = `${percentage}%`;
-      if (data.messagesLeft <= 3) demoBar.classList.replace("bg-indigo-600", "bg-red-500");
+      
+      if (data.messagesLeft <= 2) demoBar.classList.replace("bg-indigo-600", "bg-red-500");
       if (data.locked) {
         setTimeout(() => document.getElementById("lock-screen").classList.remove("hidden"), 1500);
       }
@@ -173,7 +175,6 @@ async function sendMessage() {
   }
 }
 
-// Mensaje inicial al cargar
 window.onload = () => {
   addMessage("bot", "👋 ¡Hola! Soy el consultor de **Like AI PRO**.\n\nVamos a configurar tu asistente inteligente en segundos. Para empezar, ¿me podrías decir tu **Nombre** y tu **Correo electrónico**?");
 };
