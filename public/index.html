@@ -2,176 +2,118 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Like AI PRO Demo</title>
+  <title>Like AI PRO</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
 
-<div class="bg-white w-full max-w-md h-[700px] shadow-2xl rounded-2xl flex flex-col">
+<body class="bg-gradient-to-br from-gray-900 to-black flex items-center justify-center h-screen">
+
+<div class="w-full max-w-lg h-[720px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
 
   <!-- Header -->
-  <div class="bg-black text-white p-4 rounded-t-2xl">
-    🤖 Like AI PRO
+  <div class="bg-black text-white p-4 flex items-center gap-3">
+    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-sm">
+      🤖
+    </div>
+    <div>
+      <div class="font-semibold">Like AI PRO</div>
+      <div class="text-xs text-gray-400">Consultor IA en línea</div>
+    </div>
   </div>
 
-  <!-- Chat -->
-  <div id="chat" class="flex-1 p-4 overflow-y-auto space-y-3"></div>
+  <!-- Chat messages -->
+  <div id="chat" class="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50"></div>
 
-  <!-- Options -->
-  <div id="options" class="p-4 border-t space-y-2"></div>
+  <!-- Typing indicator -->
+  <div id="typing" class="hidden px-4 text-sm text-gray-500">
+    🤖 escribiendo...
+  </div>
+
+  <!-- Input -->
+  <div class="p-4 border-t flex gap-2 bg-white">
+    <input 
+      id="userInput" 
+      class="flex-1 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+      placeholder="Escribe tu mensaje..."
+      onkeydown="if(event.key==='Enter'){sendMessage()}"
+    />
+    <button 
+      onclick="sendMessage()" 
+      class="bg-black text-white px-4 py-2 rounded-xl hover:opacity-90"
+    >
+      Enviar
+    </button>
+  </div>
 
 </div>
 
 <script>
-let state = {
-  business_type: null,
-  volume: null,
-  problem: null,
-  goal: null,
-  estimated_loss: 0
-};
-
+let sessionId = crypto.randomUUID();
 const chat = document.getElementById("chat");
-const optionsDiv = document.getElementById("options");
+const typing = document.getElementById("typing");
 
 function addBot(text) {
   const div = document.createElement("div");
-  div.className = "bg-gray-200 p-3 rounded-lg";
-  div.innerText = text;
+  div.className = "flex";
+  div.innerHTML = `
+    <div class="bg-gray-200 text-gray-800 px-4 py-2 rounded-2xl max-w-xs">
+      ${text}
+    </div>
+  `;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
 
 function addUser(text) {
   const div = document.createElement("div");
-  div.className = "bg-black text-white p-3 rounded-lg ml-auto";
-  div.innerText = text;
+  div.className = "flex justify-end";
+  div.innerHTML = `
+    <div class="bg-black text-white px-4 py-2 rounded-2xl max-w-xs">
+      ${text}
+    </div>
+  `;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function setOptions(options) {
-  optionsDiv.innerHTML = "";
-  options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.className = "w-full bg-gray-100 hover:bg-gray-200 p-2 rounded-lg";
-    btn.innerText = opt.label;
-    btn.onclick = () => {
-      addUser(opt.label);
-      optionsDiv.innerHTML = "";
-      opt.action();
-    };
-    optionsDiv.appendChild(btn);
-  });
-}
+async function sendMessage() {
+  const input = document.getElementById("userInput");
+  const message = input.value.trim();
+  if (!message) return;
 
-function startFlow() {
-  addBot("Hola 👋 soy Like AI PRO.\n¿Qué tipo de negocio tienes?");
-  setOptions([
-    { label: "Gym 💪", action: () => selectBusiness("gym") },
-    { label: "Clínica Estética ✨", action: () => selectBusiness("estetica") },
-    { label: "Restaurante 🍽", action: () => selectBusiness("restaurante") },
-    { label: "Otro", action: () => selectBusiness("otro") }
-  ]);
-}
+  input.value = "";
+  addUser(message);
 
-function selectBusiness(type) {
-  state.business_type = type;
+  typing.classList.remove("hidden");
 
-  if (type === "gym") {
-    addBot("¿Cuántos prospectos recibes al mes?");
-    setOptions([
-      { label: "0-50", action: () => selectVolume(50) },
-      { label: "50-200", action: () => selectVolume(200) },
-      { label: "200+", action: () => selectVolume(400) }
-    ]);
-  }
+  try {
+    const response = await fetch("/ai-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        message
+      })
+    });
 
-  if (type === "estetica") {
-    addBot("¿Ofreces más servicios?");
-    setOptions([
-      { label: "Faciales", action: nextGoal },
-      { label: "Corporales", action: nextGoal },
-      { label: "Ambos", action: nextGoal }
-    ]);
-  }
+    const data = await response.json();
 
-  if (type === "restaurante") {
-    addBot("¿Tu mayor problema es?");
-    setOptions([
-      { label: "Reservas", action: nextGoal },
-      { label: "Delivery", action: nextGoal },
-      { label: "Repetición clientes", action: nextGoal }
-    ]);
-  }
+    typing.classList.add("hidden");
 
-  if (type === "otro") {
-    nextGoal();
+    if (data.reply) {
+      addBot(data.reply);
+    } else {
+      addBot("Hubo un problema procesando tu mensaje.");
+    }
+
+  } catch (error) {
+    typing.classList.add("hidden");
+    addBot("Error de conexión con el servidor.");
   }
 }
 
-function selectVolume(vol) {
-  state.volume = vol;
-  state.estimated_loss = vol * 0.25;
-  nextGoal();
-}
-
-function nextGoal() {
-  addBot("Si Like AI PRO trabajara 24/7 para ti,\n¿tu objetivo principal sería?");
-  setOptions([
-    { label: "Generar más citas", action: () => finishFlow("citas") },
-    { label: "Cerrar más ventas", action: () => finishFlow("ventas") },
-    { label: "Automatizar atención", action: () => finishFlow("automatizacion") }
-  ]);
-}
-
-function finishFlow(goal) {
-  state.goal = goal;
-
-  let revenueImpact = Math.floor(state.estimated_loss * 30);
-
-  addBot(
-    "Basado en lo que me dijiste...\n\n" +
-    "Podrías estar perdiendo aproximadamente " +
-    state.estimated_loss +
-    " prospectos al mes.\n\n" +
-    "Eso podría representar hasta $" +
-    revenueImpact.toLocaleString() +
-    " en ingresos no capturados."
-  );
-
-  setOptions([
-    { label: "Activar mi sistema 🚀", action: sendToServer },
-    { label: "Hablar con asesor", action: () => alert("Aquí conectamos Calendly") }
-  ]);
-}
-
-async function sendToServer() {
-  addBot("Creando tu configuración...");
-
-  const response = await fetch("/create-bot", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      business_type: state.business_type,
-      bot_objective: state.goal,
-      business_name: state.business_type,
-      user_email: "demo@likeaipro.com",
-      whatsapp_number: "N/A",
-      tone: "profesional"
-    })
-  });
-
-  const data = await response.json();
-
-  if (data.success) {
-    addBot("✅ Tu bot fue creado correctamente.");
-  } else {
-    addBot("❌ Hubo un problema al crear tu bot.");
-  }
-}
-
-startFlow();
+// Mensaje inicial automático
+addBot("Hola 👋 Soy Like AI PRO.\nCuéntame sobre tu negocio y te ayudaré a detectar oportunidades de automatización.");
 </script>
 
 </body>
