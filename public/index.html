@@ -1,55 +1,73 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Wizard Like AI PRO</title>
+  <meta charset="UTF-8">
+  <title>Crear Bot - Like AI PRO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-  <h1>Crear tu Bot</h1>
+  <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-xl">
 
-  <input id="email" placeholder="Tu email" /><br><br>
-  <input id="business" placeholder="Nombre del negocio" /><br><br>
-  <input id="type" placeholder="Tipo de negocio" /><br><br>
-  <input id="whatsapp" placeholder="WhatsApp" /><br><br>
-  <input id="objective" placeholder="Objetivo del bot" /><br><br>
-  <input id="tone" placeholder="Tono del bot" /><br><br>
+    <h2 class="text-2xl font-bold mb-6 text-center">
+      Crear tu Asistente Inteligente
+    </h2>
 
-  <button onclick="submitBot()">Crear Bot</button>
+    <div id="step1">
+      <input id="email" class="w-full p-3 border rounded-lg mb-4" placeholder="Tu email">
+      <input id="business" class="w-full p-3 border rounded-lg mb-4" placeholder="Nombre del negocio">
+      <button onclick="nextStep(2)" class="w-full bg-black text-white p-3 rounded-lg">
+        Siguiente
+      </button>
+    </div>
 
-  <script>
-    async function submitBot() {
-      const email = document.getElementById("email").value;
-      const business = document.getElementById("business").value;
-      const type = document.getElementById("type").value;
-      const whatsapp = document.getElementById("whatsapp").value;
-      const objective = document.getElementById("objective").value;
-      const tone = document.getElementById("tone").value;
+    <div id="step2" class="hidden">
+      <input id="type" class="w-full p-3 border rounded-lg mb-4" placeholder="Tipo de negocio">
+      <input id="whatsapp" class="w-full p-3 border rounded-lg mb-4" placeholder="WhatsApp">
+      <button onclick="nextStep(3)" class="w-full bg-black text-white p-3 rounded-lg">
+        Siguiente
+      </button>
+    </div>
 
-      const response = await fetch("/create-bot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          user_email: email,
-          business_name: business,
-          business_type: type,
-          whatsapp_number: whatsapp,
-          bot_objective: objective,
-          tone: tone
-        })
-      });
+    <div id="step3" class="hidden">
+      <input id="objective" class="w-full p-3 border rounded-lg mb-4" placeholder="Objetivo del bot">
+      <input id="tone" class="w-full p-3 border rounded-lg mb-4" placeholder="Tono del bot">
+      <button onclick="submitBot()" class="w-full bg-green-600 text-white p-3 rounded-lg">
+        Crear Bot 🚀
+      </button>
+    </div>
 
-      const data = await response.json();
+  </div>
 
-      if (data.success) {
-        alert("Bot creado correctamente 🚀");
-      } else {
-        alert("Error creando bot ❌");
-        console.log(data.error);
-      }
+<script>
+  function nextStep(step) {
+    document.querySelectorAll("[id^='step']").forEach(s => s.classList.add("hidden"));
+    document.getElementById("step" + step).classList.remove("hidden");
+  }
+
+  async function submitBot() {
+    const response = await fetch("/create-bot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_email: document.getElementById("email").value,
+        business_name: document.getElementById("business").value,
+        business_type: document.getElementById("type").value,
+        whatsapp_number: document.getElementById("whatsapp").value,
+        bot_objective: document.getElementById("objective").value,
+        tone: document.getElementById("tone").value
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Bot creado correctamente 🚀");
+    } else {
+      alert("Error creando bot ❌");
     }
-  </script>
+  }
+</script>
 
 </body>
 </html>
