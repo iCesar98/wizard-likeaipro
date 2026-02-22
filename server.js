@@ -22,7 +22,7 @@ const openai = new OpenAI({
 
 // Almacenamiento en memoria (Se limpia si el servidor se reinicia)
 let sessions = {}; 
-const DEMO_LIMIT = 10;
+const DEMO_LIMIT = 6;
 
 // ==================================================
 // 1. WIZARD: CAPTURA DE DATOS
@@ -65,6 +65,12 @@ app.post("/ai-chat", async (req, res) => {
           3. Canal de implementación (WhatsApp, Telegram o Web).
           4. ¿Cuál es el problema principal que busca resolver?
           5. ¿Nombre para el bot o genérico?
+
+      REGLA CRÍTICA DE CIERRE:
+      Cuando tengas todos los datos, DEBES:
+      1. Establecer "ready_for_demo": true.
+      2. En el campo "reply", redactar un mensaje que diga: "¡Excelente! He configurado todo. Aquí tienes tu resumen:" seguido de una lista con los datos capturados.
+      3. Finalizar el mensaje con: "A continuación, se activará la demo. ¡Pruébame!".
 
           Responde SIEMPRE en este formato JSON:
           {
