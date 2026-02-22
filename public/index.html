@@ -97,13 +97,21 @@ const statusText = document.getElementById("status-text");
 
 function addMessage(role, text) {
   const isBot = role === "bot";
+  
+  // LIMPIEZA DE TEXTO:
+  // 1. Quitamos los asteriscos de negrita (**)
+  // 2. Quitamos espacios en blanco al inicio y final (.trim())
+  let cleanText = text.replace(/\*\*/g, '').trim();
+
   const div = document.createElement("div");
-  div.className = `flex ${isBot ? "" : "justify-end"} animate-fade-in`;
+  div.className = `flex ${isBot ? "" : "justify-end"} animate-fade-in my-2`; // Añadido 'my-2' para separación vertical
+  
+  // Ajustado el CSS para que el texto se alinee perfectamente
   div.innerHTML = `
-    <div class="${isBot ? "bg-white border border-gray-200 text-gray-800 shadow-sm" : "bg-black text-white shadow-md"} px-5 py-3 rounded-2xl max-w-[85%] whitespace-pre-line text-sm leading-relaxed">
-      ${text}
-    </div>
+    <div class="${isBot ? "bg-white border border-gray-200 text-gray-800" : "bg-black text-white"} px-5 py-3 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm break-words">
+      ${cleanText.replace(/\n/g, '<br>')} </div>
   `;
+  
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
