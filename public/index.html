@@ -2,47 +2,78 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Like AI PRO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wizard | Like AI PRO</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    .demo-counter { transition: width 0.5s ease-in-out; }
+  </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-900 to-black flex items-center justify-center h-screen">
+<body class="bg-gradient-to-br from-gray-900 via-black to-blue-900 flex items-center justify-center h-screen p-4">
 
-<div class="w-full max-w-lg h-[720px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-
-  <!-- Header -->
-  <div class="bg-black text-white p-4 flex items-center gap-3">
-    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-sm">
-      🤖
+<div class="w-full max-w-lg h-[85vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-gray-800 relative">
+  
+  <div class="bg-black text-white p-5 flex items-center justify-between border-b border-gray-800">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/50">
+        <span class="text-xl">🤖</span>
+      </div>
+      <div>
+        <div class="font-bold text-lg tracking-tight">Like AI PRO <span class="text-xs font-normal text-indigo-400 ml-1">Wizard</span></div>
+        <div id="status-text" class="text-xs text-gray-400">Configurando tu asistente...</div>
+      </div>
     </div>
-    <div>
-      <div class="font-semibold">Like AI PRO</div>
-      <div class="text-xs text-gray-400">Creador de Chatbots Inteligentes</div>
+    <div id="badge-mode" class="bg-gray-800 text-[10px] uppercase tracking-widest px-2 py-1 rounded-full text-gray-300 border border-gray-700">
+      Fase 1: Configuración
     </div>
   </div>
 
-  <!-- Chat messages -->
-  <div id="chat" class="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50"></div>
-
-  <!-- Typing indicator -->
-  <div id="typing" class="hidden px-4 text-sm text-gray-500">
-    🤖 escribiendo...
+  <div id="demo-progress-container" class="hidden bg-gray-100 h-2 w-full">
+    <div id="demo-bar" class="demo-counter bg-indigo-600 h-full w-full"></div>
   </div>
 
-  <!-- Input -->
-  <div class="p-4 border-t flex gap-2 bg-white">
-    <input 
-      id="userInput" 
-      class="flex-1 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-      placeholder="Escribe tu mensaje..."
-      onkeydown="if(event.key==='Enter'){sendMessage()}"
-    />
-    <button 
-      onclick="sendMessage()" 
-      class="bg-black text-white px-4 py-2 rounded-xl hover:opacity-90"
-    >
-      Enviar
-    </button>
+  <div id="chat" class="flex-1 p-6 overflow-y-auto space-y-4 bg-gray-50 flex flex-col">
+    </div>
+
+  <div id="typing" class="hidden px-6 py-2 text-xs text-gray-500 italic flex items-center gap-2">
+    <span class="relative flex h-2 w-2">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+    </span>
+    El asistente está escribiendo...
+  </div>
+
+  <div id="input-container" class="p-5 border-t glass">
+    <div class="flex gap-3">
+      <input 
+        id="userInput" 
+        class="flex-1 border-none bg-gray-100 rounded-2xl px-5 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800"
+        placeholder="Escribe aquí..."
+        onkeydown="if(event.key==='Enter'){sendMessage()}"
+      />
+      <button 
+        onclick="sendMessage()" 
+        class="bg-black text-white px-6 py-3 rounded-2xl font-semibold hover:bg-gray-800 transition-all flex items-center gap-2"
+      >
+        <span>Enviar</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="lock-screen" class="hidden absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center text-white z-50">
+    <div class="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-4xl mb-6 shadow-2xl shadow-indigo-500/40">🔒</div>
+    <h2 class="text-3xl font-bold mb-4">¡Demo Completada!</h2>
+    <p class="text-gray-300 mb-8 leading-relaxed">
+      Tu asistente inteligente para <span id="target-platform" class="text-indigo-400 font-bold">WhatsApp</span> está listo para trabajar 24/7 y cerrar ventas por ti.
+    </p>
+    <a href="https://likeaipro.com/#precios" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl transition-all transform hover:scale-105">
+      🚀 Activar Servicio Completo
+    </a>
+    <button onclick="location.reload()" class="mt-4 text-sm text-gray-500 hover:text-white underline">Reiniciar configuración</button>
   </div>
 
 </div>
@@ -50,113 +81,7 @@
 <script>
 let sessionId = crypto.randomUUID();
 let demoMode = false;
+let maxMessages = 10;
 
 const chat = document.getElementById("chat");
-const typing = document.getElementById("typing");
-
-function addBot(text) {
-  const div = document.createElement("div");
-  div.className = "flex";
-  div.innerHTML = `
-    <div class="bg-gray-200 text-gray-800 px-4 py-2 rounded-2xl max-w-xs whitespace-pre-line">
-      ${text}
-    </div>
-  `;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function addUser(text) {
-  const div = document.createElement("div");
-  div.className = "flex justify-end";
-  div.innerHTML = `
-    <div class="bg-black text-white px-4 py-2 rounded-2xl max-w-xs whitespace-pre-line">
-      ${text}
-    </div>
-  `;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-async function sendMessage() {
-  const input = document.getElementById("userInput");
-  const message = input.value.trim();
-  if (!message) return;
-
-  input.value = "";
-  addUser(message);
-
-  typing.classList.remove("hidden");
-
-  try {
-
-    const endpoint = demoMode ? "/demo-chat" : "/ai-chat";
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId,
-        message
-      })
-    });
-
-    const data = await response.json();
-    typing.classList.add("hidden");
-
-    // ===============================
-    // 🧠 MODO CREACIÓN BOT
-    // ===============================
-    if (!demoMode) {
-
-      if (data.reply) {
-        addBot(data.reply);
-      }
-
-      if (data.stage === "impact") {
-
-        addBot("🚀 Activando demo personalizada...");
-
-        await fetch("/generate-demo-bot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId,
-            business_type: data.business_type,
-            main_problem: data.main_problem,
-            goal: data.goal
-          })
-        });
-
-        demoMode = true;
-
-        setTimeout(() => {
-          addBot("✅ Demo activada.\nAhora escribe como si fueras tu cliente y observa cómo respondería tu bot.");
-        }, 800);
-      }
-
-    } 
-    // ===============================
-    // 🤖 MODO DEMO BOT REAL
-    // ===============================
-    else {
-      if (data.reply) {
-        addBot(data.reply);
-      } else {
-        addBot("Error en demo.");
-      }
-    }
-
-  } catch (error) {
-    typing.classList.add("hidden");
-    addBot("Error de conexión con el servidor.");
-  }
-}
-
-// 🔥 NUEVO MENSAJE INICIAL
-addBot("👋 Bienvenido a Like AI PRO.\n\nVamos a crear tu chatbot inteligente en menos de 2 minutos.\n\nPrimero, dime tu nombre.");
-
-</script>
-
-</body>
-</html>
+const typing = document
