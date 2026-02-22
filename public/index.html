@@ -10,6 +10,11 @@
     body { font-family: 'Inter', sans-serif; }
     .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
     .demo-counter { transition: width 0.5s ease-in-out; }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
   </style>
 </head>
 
@@ -84,4 +89,88 @@ let demoMode = false;
 let maxMessages = 10;
 
 const chat = document.getElementById("chat");
-const typing = document
+const typing = document.getElementById("typing");
+const demoProgress = document.getElementById("demo-progress-container");
+const demoBar = document.getElementById("demo-bar");
+const badgeMode = document.getElementById("badge-mode");
+const statusText = document.getElementById("status-text");
+
+function addMessage(role, text) {
+  const isBot = role === "bot";
+  const div = document.createElement("div");
+  div.className = `flex ${isBot ? "" : "justify-end"} animate-fade-in`;
+  div.innerHTML = `
+    <div class="${isBot ? "bg-white border border-gray-200 text-gray-800 shadow-sm" : "bg-black text-white shadow-md"} px-5 py-3 rounded-2xl max-w-[85%] whitespace-pre-line text-sm leading-relaxed">
+      ${text}
+    </div>
+  `;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById("userInput");
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = "";
+  addMessage("user", message);
+  typing.classList.remove("hidden");
+
+  try {
+    const endpoint = demoMode ? "/demo-chat" : "/ai-chat";
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, message })
+    });
+
+    const data = await response.json();
+    typing.classList.add("hidden");
+
+    if (data.reply) {
+      addMessage("bot", data.reply);
+    }
+
+    // Activar modo demo si el servidor dice que ya tiene los datos
+    if (data.ready_for_demo && !demoMode) {
+      demoMode = true;
+      demoProgress.classList.remove("hidden");
+      badgeMode.innerText = "Fase 2: Demo en Vivo";
+      badgeMode.classList.replace("bg-gray-800", "bg-green-600");
+      statusText.innerText = "Probando tu asistente personalizado...";
+      if (data.extracted_data && data.extracted_data.platform) {
+          document.getElementById("target-platform").innerText = data.extracted_data.platform;
+      }
+    }
+
+    // Manejar contador de mensajes en la demo
+    if (demoMode && data.messagesLeft !== undefined) {
+      const percentage = (data.messagesLeft / maxMessages) * 100;
+      demoBar.style.width = `${percentage}%`;
+      
+      if (data.messagesLeft <= 3) {
+          demoBar.classList.replace("bg-indigo-600", "bg-red-500");
+      }
+
+      if (data.locked) {
+        setTimeout(() => {
+          document.getElementById("lock-screen").classList.remove("hidden");
+        }, 1500);
+      }
+    }
+
+  } catch (error) {
+    typing.classList.add("hidden");
+    addMessage("bot", "❌ Error de conexión. Reintenta por favor.");
+  }
+}
+
+// Mensaje inicial al cargar
+window.onload = () => {
+  addMessage("bot", "👋 ¡Hola! Soy el consultor de **Like AI PRO**.\n\nVamos a configurar tu asistente inteligente en segundos. Para empezar, ¿me podrías decir tu **Nombre** y tu **Correo electrónico**?");
+};
+</script>
+
+</body>
+</html>
