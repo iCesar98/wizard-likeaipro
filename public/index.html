@@ -17,7 +17,7 @@
     </div>
     <div>
       <div class="font-semibold">Like AI PRO</div>
-      <div class="text-xs text-gray-400">Consultor IA en línea</div>
+      <div class="text-xs text-gray-400">Creador de Chatbots Inteligentes</div>
     </div>
   </div>
 
@@ -90,7 +90,6 @@ async function sendMessage() {
 
   try {
 
-    // 🔥 Cambia automáticamente según modo
     const endpoint = demoMode ? "/demo-chat" : "/ai-chat";
 
     const response = await fetch(endpoint, {
@@ -106,7 +105,7 @@ async function sendMessage() {
     typing.classList.add("hidden");
 
     // ===============================
-    // 🧠 MODO CONSULTOR
+    // 🧠 MODO CREACIÓN BOT
     // ===============================
     if (!demoMode) {
 
@@ -114,7 +113,6 @@ async function sendMessage() {
         addBot(data.reply);
       }
 
-      // 🔥 Si llega a etapa IMPACT → activar demo
       if (data.stage === "impact") {
 
         addBot("🚀 Activando demo personalizada...");
@@ -155,8 +153,9 @@ async function sendMessage() {
   }
 }
 
-// Mensaje inicial automático
-addBot("Hola 👋 Soy Like AI PRO.\nCuéntame sobre tu negocio y te ayudaré a detectar oportunidades de automatización.");
+// 🔥 NUEVO MENSAJE INICIAL
+addBot("👋 Bienvenido a Like AI PRO.\n\nVamos a crear tu chatbot inteligente en menos de 2 minutos.\n\nPrimero, dime tu nombre.");
+
 </script>
 
 </body>
