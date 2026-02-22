@@ -24,14 +24,17 @@
 
 <script>
 let state = {
-  step: 0,
-  business_type: null
+  business_type: null,
+  volume: null,
+  problem: null,
+  goal: null,
+  estimated_loss: 0
 };
 
 const chat = document.getElementById("chat");
 const optionsDiv = document.getElementById("options");
 
-function addBotMessage(text) {
+function addBot(text) {
   const div = document.createElement("div");
   div.className = "bg-gray-200 p-3 rounded-lg";
   div.innerText = text;
@@ -39,9 +42,9 @@ function addBotMessage(text) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function addUserMessage(text) {
+function addUser(text) {
   const div = document.createElement("div");
-  div.className = "bg-black text-white p-3 rounded-lg self-end";
+  div.className = "bg-black text-white p-3 rounded-lg ml-auto";
   div.innerText = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
@@ -53,78 +56,119 @@ function setOptions(options) {
     const btn = document.createElement("button");
     btn.className = "w-full bg-gray-100 hover:bg-gray-200 p-2 rounded-lg";
     btn.innerText = opt.label;
-    btn.onclick = () => handleOption(opt);
+    btn.onclick = () => {
+      addUser(opt.label);
+      optionsDiv.innerHTML = "";
+      opt.action();
+    };
     optionsDiv.appendChild(btn);
   });
 }
 
-function handleOption(opt) {
-  addUserMessage(opt.label);
-  optionsDiv.innerHTML = "";
-  opt.action();
-}
-
 function startFlow() {
-  addBotMessage("Hola 👋 soy Like AI PRO.\n¿Qué tipo de negocio tienes?");
+  addBot("Hola 👋 soy Like AI PRO.\n¿Qué tipo de negocio tienes?");
   setOptions([
-    { label: "Gym 💪", action: () => gymFlow() },
-    { label: "Clínica Estética ✨", action: () => estFlow() },
-    { label: "Restaurante 🍽", action: () => restFlow() },
-    { label: "Otro", action: () => otherFlow() }
+    { label: "Gym 💪", action: () => selectBusiness("gym") },
+    { label: "Clínica Estética ✨", action: () => selectBusiness("estetica") },
+    { label: "Restaurante 🍽", action: () => selectBusiness("restaurante") },
+    { label: "Otro", action: () => selectBusiness("otro") }
   ]);
 }
 
-function gymFlow() {
-  state.business_type = "gym";
-  addBotMessage("Perfecto 💪\n¿Cuántos prospectos recibes al mes?");
+function selectBusiness(type) {
+  state.business_type = type;
+
+  if (type === "gym") {
+    addBot("¿Cuántos prospectos recibes al mes?");
+    setOptions([
+      { label: "0-50", action: () => selectVolume(50) },
+      { label: "50-200", action: () => selectVolume(200) },
+      { label: "200+", action: () => selectVolume(400) }
+    ]);
+  }
+
+  if (type === "estetica") {
+    addBot("¿Ofreces más servicios?");
+    setOptions([
+      { label: "Faciales", action: nextGoal },
+      { label: "Corporales", action: nextGoal },
+      { label: "Ambos", action: nextGoal }
+    ]);
+  }
+
+  if (type === "restaurante") {
+    addBot("¿Tu mayor problema es?");
+    setOptions([
+      { label: "Reservas", action: nextGoal },
+      { label: "Delivery", action: nextGoal },
+      { label: "Repetición clientes", action: nextGoal }
+    ]);
+  }
+
+  if (type === "otro") {
+    nextGoal();
+  }
+}
+
+function selectVolume(vol) {
+  state.volume = vol;
+  state.estimated_loss = vol * 0.25;
+  nextGoal();
+}
+
+function nextGoal() {
+  addBot("Si Like AI PRO trabajara 24/7 para ti,\n¿tu objetivo principal sería?");
   setOptions([
-    { label: "0-50", action: impactFlow },
-    { label: "50-200", action: impactFlow },
-    { label: "200+", action: impactFlow }
+    { label: "Generar más citas", action: () => finishFlow("citas") },
+    { label: "Cerrar más ventas", action: () => finishFlow("ventas") },
+    { label: "Automatizar atención", action: () => finishFlow("automatizacion") }
   ]);
 }
 
-function estFlow() {
-  state.business_type = "estetica";
-  addBotMessage("Excelente ✨\n¿Ofreces más servicios?");
+function finishFlow(goal) {
+  state.goal = goal;
+
+  let revenueImpact = Math.floor(state.estimated_loss * 30);
+
+  addBot(
+    "Basado en lo que me dijiste...\n\n" +
+    "Podrías estar perdiendo aproximadamente " +
+    state.estimated_loss +
+    " prospectos al mes.\n\n" +
+    "Eso podría representar hasta $" +
+    revenueImpact.toLocaleString() +
+    " en ingresos no capturados."
+  );
+
   setOptions([
-    { label: "Faciales", action: impactFlow },
-    { label: "Corporales", action: impactFlow },
-    { label: "Ambos", action: impactFlow }
+    { label: "Activar mi sistema 🚀", action: sendToServer },
+    { label: "Hablar con asesor", action: () => alert("Aquí conectamos Calendly") }
   ]);
 }
 
-function restFlow() {
-  state.business_type = "restaurante";
-  addBotMessage("Genial 🍽\n¿Cuál es tu mayor problema?");
-  setOptions([
-    { label: "Reservas", action: impactFlow },
-    { label: "Delivery", action: impactFlow },
-    { label: "Repetición clientes", action: impactFlow }
-  ]);
-}
+async function sendToServer() {
+  addBot("Creando tu configuración...");
 
-function otherFlow() {
-  state.business_type = "otro";
-  impactFlow();
-}
+  const response = await fetch("/create-bot", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      business_type: state.business_type,
+      bot_objective: state.goal,
+      business_name: state.business_type,
+      user_email: "demo@likeaipro.com",
+      whatsapp_number: "N/A",
+      tone: "profesional"
+    })
+  });
 
-function impactFlow() {
-  addBotMessage("Entendido.\n\nPodrías estar perdiendo entre 20% y 35% de clientes por falta de seguimiento.\n\nCon Like AI PRO podrías automatizar el 80% de tu atención.");
-  setOptions([
-    { label: "Sí, quiero verlo 🚀", action: closeFlow },
-    { label: "Quiero hablar con alguien", action: closeFlow },
-    { label: "Solo estaba viendo", action: closeFlow }
-  ]);
-}
+  const data = await response.json();
 
-function closeFlow() {
-  addBotMessage("Perfecto 🚀\nPodemos activar tu sistema esta semana.\n\n¿Quieres agendar llamada?");
-  setOptions([
-    { label: "Agendar llamada", action: () => alert("Aquí conectaremos Calendly") },
-    { label: "Enviar propuesta", action: () => alert("Aquí enviaremos propuesta") },
-    { label: "Más información", action: () => alert("Más info pronto") }
-  ]);
+  if (data.success) {
+    addBot("✅ Tu bot fue creado correctamente.");
+  } else {
+    addBot("❌ Hubo un problema al crear tu bot.");
+  }
 }
 
 startFlow();
