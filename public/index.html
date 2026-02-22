@@ -49,6 +49,8 @@
 
 <script>
 let sessionId = crypto.randomUUID();
+let demoMode = false;
+
 const chat = document.getElementById("chat");
 const typing = document.getElementById("typing");
 
@@ -56,7 +58,7 @@ function addBot(text) {
   const div = document.createElement("div");
   div.className = "flex";
   div.innerHTML = `
-    <div class="bg-gray-200 text-gray-800 px-4 py-2 rounded-2xl max-w-xs">
+    <div class="bg-gray-200 text-gray-800 px-4 py-2 rounded-2xl max-w-xs whitespace-pre-line">
       ${text}
     </div>
   `;
@@ -68,7 +70,7 @@ function addUser(text) {
   const div = document.createElement("div");
   div.className = "flex justify-end";
   div.innerHTML = `
-    <div class="bg-black text-white px-4 py-2 rounded-2xl max-w-xs">
+    <div class="bg-black text-white px-4 py-2 rounded-2xl max-w-xs whitespace-pre-line">
       ${text}
     </div>
   `;
@@ -87,7 +89,11 @@ async function sendMessage() {
   typing.classList.remove("hidden");
 
   try {
-    const response = await fetch("/ai-chat", {
+
+    // 🔥 Cambia automáticamente según modo
+    const endpoint = demoMode ? "/demo-chat" : "/ai-chat";
+
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -97,13 +103,50 @@ async function sendMessage() {
     });
 
     const data = await response.json();
-
     typing.classList.add("hidden");
 
-    if (data.reply) {
-      addBot(data.reply);
-    } else {
-      addBot("Hubo un problema procesando tu mensaje.");
+    // ===============================
+    // 🧠 MODO CONSULTOR
+    // ===============================
+    if (!demoMode) {
+
+      if (data.reply) {
+        addBot(data.reply);
+      }
+
+      // 🔥 Si llega a etapa IMPACT → activar demo
+      if (data.stage === "impact") {
+
+        addBot("🚀 Activando demo personalizada...");
+
+        await fetch("/generate-demo-bot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            business_type: data.business_type,
+            main_problem: data.main_problem,
+            goal: data.goal
+          })
+        });
+
+        demoMode = true;
+
+        setTimeout(() => {
+          addBot("✅ Demo activada.\nAhora escribe como si fueras tu cliente y observa cómo respondería tu bot.");
+        }, 800);
+      }
+
+    } 
+    // ===============================
+    // 🤖 MODO DEMO BOT REAL
+    // ===============================
+    else {
+      if (data.reply) {
+        addBot(data.reply);
+      } else {
+        addBot("Error en demo.");
+      }
     }
 
   } catch (error) {

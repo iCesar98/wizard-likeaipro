@@ -20,13 +20,16 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// 🔹 Memoria temporal conversaciones
+// 🔹 Memoria temporal conversaciones consultor
 let conversations = {};
 
+// 🔹 Memoria temporal bots demo personalizados
+let demoBots = {};
 
-// =============================
-// ENDPOINT EXISTENTE
-// =============================
+
+// ==================================================
+// ENDPOINT EXISTENTE - CREAR BOT EN BASE DE DATOS
+// ==================================================
 app.post("/create-bot", async (req, res) => {
   try {
     const {
@@ -62,9 +65,9 @@ app.post("/create-bot", async (req, res) => {
 });
 
 
-// =============================
-// NUEVO ENDPOINT IA
-// =============================
+// ==================================================
+// ENDPOINT IA CONSULTOR
+// ==================================================
 app.post("/ai-chat", async (req, res) => {
   try {
     const { sessionId, message } = req.body;
@@ -75,11 +78,17 @@ app.post("/ai-chat", async (req, res) => {
           role: "system",
           content: `
 Eres Like AI PRO, consultor experto en automatización con IA.
-Debes identificar negocio, problema y objetivo.
-Responde siempre en JSON:
+
+Tu misión:
+1. Identificar tipo de negocio
+2. Detectar principal problema
+3. Detectar objetivo del negocio
+4. Calificar qué tan preparado está para automatizar
+
+Responde SIEMPRE en JSON válido:
 
 {
-  "reply": "mensaje",
+  "reply": "mensaje natural al usuario",
   "business_type": "",
   "main_problem": "",
   "goal": "",
@@ -109,7 +118,16 @@ Responde siempre en JSON:
       content: aiResponse
     });
 
-    const parsed = JSON.parse(aiResponse);
+    // 🔹 Parse seguro
+    let parsed;
+    try {
+      parsed = JSON.parse(aiResponse);
+    } catch (e) {
+      parsed = {
+        reply: aiResponse,
+        stage: "error"
+      };
+    }
 
     res.json(parsed);
 
@@ -123,9 +141,93 @@ Responde siempre en JSON:
 });
 
 
-// =============================
+// ==================================================
+// GENERAR BOT DEMO PERSONALIZADO
+// ==================================================
+app.post("/generate-demo-bot", async (req, res) => {
+  try {
+    const { sessionId, business_type, main_problem, goal } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ success: false });
+    }
+
+    const prompt = `
+Eres el asistente virtual oficial de un negocio tipo ${business_type}.
+
+Objetivo principal:
+${goal}
+
+Problema principal que debe resolver:
+${main_problem}
+
+Comportamiento obligatorio:
+- Responder como bot real en producción
+- Ser profesional pero cercano
+- Hacer preguntas de calificación
+- Detectar intención de compra
+- Intentar cerrar cita o venta
+- No mencionar que eres una demo
+`;
+
+    demoBots[sessionId] = [
+      { role: "system", content: prompt }
+    ];
+
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
+
+
+// ==================================================
+// CHAT DEMO (SIMULADOR DE BOT REAL)
+// ==================================================
+app.post("/demo-chat", async (req, res) => {
+  try {
+    const { sessionId, message } = req.body;
+
+    if (!demoBots[sessionId]) {
+      return res.status(400).json({
+        reply: "Bot demo no inicializado."
+      });
+    }
+
+    demoBots[sessionId].push({
+      role: "user",
+      content: message
+    });
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: demoBots[sessionId],
+      temperature: 0.7
+    });
+
+    const aiReply = completion.choices[0].message.content;
+
+    demoBots[sessionId].push({
+      role: "assistant",
+      content: aiReply
+    });
+
+    res.json({ reply: aiReply });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      reply: "Error en demo."
+    });
+  }
+});
+
+
+// ==================================================
 // SERVER LISTEN SIEMPRE AL FINAL
-// =============================
+// ==================================================
 app.listen(PORT, () => {
   console.log("Servidor corriendo en puerto " + PORT);
 });
