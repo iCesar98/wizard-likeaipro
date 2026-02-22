@@ -140,37 +140,36 @@ async function sendMessage() {
       addMessage("bot", data.reply);
     }
 
-    // Activar modo demo si el servidor dice que ya tiene los datos
+    // TRANSICIÓN MEJORADA
     if (data.ready_for_demo && !demoMode) {
       demoMode = true;
-      demoProgress.classList.remove("hidden");
-      badgeMode.innerText = "Fase 2: Demo en Vivo";
-      badgeMode.classList.replace("bg-gray-800", "bg-green-600");
-      statusText.innerText = "Probando tu asistente personalizado...";
-      if (data.extracted_data && data.extracted_data.platform) {
+      setTimeout(() => {
+        addMessage("bot", "🚀 **SISTEMA:** La demo se ha activado. Ahora estás interactuando con tu nuevo asistente personalizado.");
+        
+        // Actualizamos UI
+        demoProgress.classList.remove("hidden");
+        badgeMode.innerText = "Fase 2: Demo en Vivo";
+        badgeMode.classList.replace("bg-gray-800", "bg-green-600");
+        statusText.innerText = "Probando tu asistente...";
+        
+        if (data.extracted_data?.platform) {
           document.getElementById("target-platform").innerText = data.extracted_data.platform;
-      }
+        }
+      }, 1000); // Esperamos un segundo para que el usuario lea el resumen
     }
 
-    // Manejar contador de mensajes en la demo
     if (demoMode && data.messagesLeft !== undefined) {
       const percentage = (data.messagesLeft / maxMessages) * 100;
       demoBar.style.width = `${percentage}%`;
-      
-      if (data.messagesLeft <= 3) {
-          demoBar.classList.replace("bg-indigo-600", "bg-red-500");
-      }
-
+      if (data.messagesLeft <= 3) demoBar.classList.replace("bg-indigo-600", "bg-red-500");
       if (data.locked) {
-        setTimeout(() => {
-          document.getElementById("lock-screen").classList.remove("hidden");
-        }, 1500);
+        setTimeout(() => document.getElementById("lock-screen").classList.remove("hidden"), 1500);
       }
     }
 
   } catch (error) {
     typing.classList.add("hidden");
-    addMessage("bot", "❌ Error de conexión. Reintenta por favor.");
+    addMessage("bot", "❌ Error de conexión. Reintenta.");
   }
 }
 
