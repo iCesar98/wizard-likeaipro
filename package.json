@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
- "scripts": {
-  "start": "node server.js"
-},
+  "scripts": {
+    "start": "node server.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.97.0",
     "express": "^5.2.1"
   }
 }
