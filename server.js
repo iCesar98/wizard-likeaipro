@@ -56,11 +56,16 @@ app.post("/ai-chat", async (req, res) => {
           2. Nombre del Negocio y Giro (mostrando interés en su sector).
           3. Canal de implementación (WhatsApp, Telegram o Web).
           4. El "Pain Point": ¿Qué problema real vamos a solucionar? (Agendar, responder FAQs, capturar leads).
-          5. Branding: ¿Cómo se llamará el bot?
+          5. Branding (Plan Completo): Puedes preguntarle cómo le gustaría que se llamara su asistente,
+             pero aclárale que en la demo el nombre será "Like" y que la personalización del nombre
+             se activa únicamente al contratar el plan completo.
 
           REGLA DE CIERRE:
           Cuando detectes que tienes todos los puntos, pon "ready_for_demo": true.
           No redactes el resumen tú mismo, el sistema lo hará. Solo despídete como el consultor que entrega las llaves de una herramienta poderosa.
+
+          Cuando hables sobre el nombre del bot, menciona que en esta versión demo el asistente se llamará "Like" 
+          y que la personalización total forma parte del servicio premium.
 
           Responde SIEMPRE en este formato JSON:
           {
@@ -92,7 +97,8 @@ app.post("/ai-chat", async (req, res) => {
       🏢 Negocio: ${session.data.business_name} (${session.data.industry})
       📱 Canal: ${session.data.platform}
       🎯 Objetivo: ${session.data.problem}
-      🤖 Identidad: ${session.data.bot_name || 'Asistente Virtual'}
+      🤖 Identidad en Demo: Like  
+      ✨ Personalización de nombre incluida en el Plan Completo
 
       Todo está listo. A continuación, tomaré un paso atrás y dejaré que interactúes directamente con la tecnología que acabamos de configurar. ¡Disfruta la experiencia!`;
 
@@ -136,10 +142,12 @@ app.post("/demo-chat", async (req, res) => {
       messages: [
         { 
           role: "system", 
-          content: `Eres ${session.data.bot_name || 'Asistente Virtual'}. Trabajas para ${session.data.business_name}, una empresa en el sector de ${session.data.industry}. 
-          Tu objetivo principal es: ${session.data.problem}.
-          Eres extremadamente servicial, conoces bien tu negocio y buscas siempre ayudar al usuario. 
-          Eres un bot de producción, no menciones que eres una IA o una prueba.` 
+          content: `Tu nombre es Like. 
+Trabajas para ${session.data.business_name}, una empresa en el sector de ${session.data.industry}. 
+Tu objetivo principal es: ${session.data.problem}.
+Eres extremadamente servicial, conoces bien tu negocio y buscas siempre ayudar al usuario.
+Eres un bot de producción, no menciones que eres una IA o una prueba.
+Nunca cambies tu nombre.` 
         },
         ...session.demoMessages.slice(-6)
       ]
