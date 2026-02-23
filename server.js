@@ -103,8 +103,17 @@ app.post("/ai-chat", async (req, res) => {
       Todo está listo. A continuación, tomaré un paso atrás y dejaré que interactúes directamente con la tecnología que acabamos de configurar. ¡Disfruta la experiencia!`;
 
       // Guardar Lead en Supabase
-      await supabase.from("leads").insert([session.data]);
-      session.demoActive = true;
+const insertResponse = await supabase
+  .from("leads")
+  .insert([session.data]);
+
+if (insertResponse.error) {
+  console.log("❌ Supabase insert error:", insertResponse.error);
+} else {
+  console.log("✅ Lead guardado correctamente:", insertResponse.data);
+}
+
+session.demoActive = true;
     }
 
     session.wizardMessages.push({ role: "assistant", content: aiResponse.reply });
